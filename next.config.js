@@ -19,7 +19,6 @@ const nextConfig = {
     unoptimized: true,
   },
   // Add performance optimizations
-  swcMinify: true,
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
