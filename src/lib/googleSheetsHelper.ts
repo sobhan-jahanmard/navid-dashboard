@@ -1,7 +1,13 @@
 import { google } from "googleapis";
+import fs from "fs";
+import path from "path";
 
 // Initialize the Google Sheets API
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
+
+const credentialsPath = path.join(process.cwd(), "credentials.json");
+
+fs.writeFileSync(credentialsPath, process.env.CREDENTIALS!);
 
 // Google Sheet ID
 const SPREADSHEET_ID = "14xL_J_I1alAEnmPHJsOvSFArUtU7MreEwu5tL8RSyUk";
@@ -12,7 +18,7 @@ type Auth = Parameters<(typeof google)["sheets"]>["0"]["auth"];
 async function getAuthClient() {
   try {
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.CREDENTIALS!),
+      keyFile: credentialsPath,
       scopes: SCOPES,
     });
     return auth.getClient();
