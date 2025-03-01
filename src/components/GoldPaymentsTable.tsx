@@ -1,0 +1,273 @@
+import React, { useState } from 'react';
+import { format } from 'date-fns';
+import Button from '@/components/ui/Button';
+import { useSession } from "next-auth/react";
+
+interface GoldPayment {
+  id: string;
+  date: string;
+  discordId: string;
+  nameRealm: string;
+  amount: string;
+  category: string;
+  status: string;
+  paidBy: string;
+}
+
+interface GoldPaymentsTableProps {
+  goldPayments: GoldPayment[];
+  isLoading: boolean;
+  timeframeFilter?: string;
+  onTimeframeFilterChange?: (value: string) => void;
+}
+
+export default function GoldPaymentsTable({ 
+  goldPayments, 
+  isLoading, 
+  timeframeFilter = 'all',
+  onTimeframeFilterChange
+}: GoldPaymentsTableProps) {
+  const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Toggle expanded view
+  const toggleExpand = (id: string) => {
+    setExpandedPayment(expandedPayment === id ? null : id);
+  };
+
+  // Format date helper
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? dateString : format(date, 'PPP');
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+  
+  // Update gold payment status
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    if (!session?.user) return;
+    
+    try {
+      setUpdatingStatus(id);
+      setError(null);
+      
+      const response = await fetch(`/api/gold-payments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status: newStatus,
+          paidBy: session?.user?.username || session?.user?.name
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update gold payment status');
+      }
+      
+      // Refresh the page to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating gold payment status:', error);
+      setError('Failed to update status. Please try again.');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-yellow-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h3 className="text-lg font-medium text-gray-900">Gold Payments</h3>
+        <p className="mt-1 text-sm text-gray-500">Game currency transactions and gold sales</p>
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      </div>
+      
+      {/* Timeframe filter for gold payments */}
+      {onTimeframeFilterChange && (
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+          <div>
+            <label htmlFor="gold-timeframe-filter" className="block text-sm font-medium text-gray-700 mb-1">Submission Time</label>
+            <select
+              id="gold-timeframe-filter"
+              value={timeframeFilter}
+              onChange={(e) => onTimeframeFilterChange(e.target.value)}
+              className="w-full md:w-64 p-2 border border-gray-300 rounded-md"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="thisWeek">This Week</option>
+              <option value="lastWeek">Last Week</option>
+              <option value="thisMonth">This Month</option>
+              <option value="lastMonth">Last Month</option>
+            </select>
+          </div>
+        </div>
+      )}
+      
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name/Realm</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {goldPayments.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  No gold payments found.
+                </td>
+              </tr>
+            ) : (
+              goldPayments.map((payment) => (
+                <React.Fragment key={payment.id}>
+                  <tr className={
+                    payment.status === 'Paid' ? 'bg-green-50' : 
+                    payment.status === 'Cancelled' ? 'bg-red-50' : ''
+                  }>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{formatDate(payment.date)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap min-w-[180px]">
+                      <div className="text-sm text-gray-900">{payment.nameRealm}</div>
+                      <div className="text-xs text-gray-500">{payment.discordId}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
+                      <div className="text-sm text-gray-900">
+                        {isNaN(Number(payment.amount)) 
+                          ? payment.amount 
+                          : Number(payment.amount).toLocaleString('en-US', {
+                              style: 'decimal',
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0
+                            })
+                        }
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
+                      <div className="text-sm text-gray-900">{payment.category}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {session?.user?.role === 'SUPPORT' ? (
+                        <select
+                          value={payment.status || 'Pending'}
+                          onChange={(e) => handleUpdateStatus(payment.id, e.target.value)}
+                          disabled={updatingStatus === payment.id}
+                          className={`px-2 py-1 text-xs font-semibold rounded border ${
+                            payment.status === 'Paid' 
+                              ? 'bg-green-100 text-green-800 border-green-300' 
+                              : payment.status === 'Cancelled'
+                                ? 'bg-red-100 text-red-800 border-red-300'
+                                : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                          }`}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Paid">Paid</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      ) : (
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          payment.status === 'Paid' 
+                            ? 'bg-green-100 text-green-800' 
+                            : payment.status === 'Cancelled'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {payment.status || 'Pending'}
+                        </span>
+                      )}
+                      {payment.paidBy && (payment.status === 'Paid' || payment.status === 'Cancelled') && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          By: {payment.paidBy}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => toggleExpand(payment.id)}
+                        disabled={updatingStatus === payment.id}
+                      >
+                        {expandedPayment === payment.id ? 'Hide' : 'View'}
+                      </Button>
+                    </td>
+                  </tr>
+                  {expandedPayment === payment.id && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-4 bg-gray-50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500">Payment Details</h4>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">ID:</span> {payment.id}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Date:</span> {formatDate(payment.date)}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Amount:</span> {
+                                isNaN(Number(payment.amount)) 
+                                  ? payment.amount 
+                                  : Number(payment.amount).toLocaleString('en-US', {
+                                      style: 'decimal',
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 0
+                                    })
+                              }
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Category:</span> {payment.category}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500">User Information</h4>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Name/Realm:</span> {payment.nameRealm}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Discord ID:</span> {payment.discordId}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Status:</span> {payment.status || 'Pending'}
+                            </p>
+                            {payment.paidBy && (
+                              <p className="mt-1 text-sm text-gray-900">
+                                <span className="font-medium">Who {payment.status === 'Cancelled' ? 'Cancelled' : 'Paid'}:</span> {payment.paidBy}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+} 

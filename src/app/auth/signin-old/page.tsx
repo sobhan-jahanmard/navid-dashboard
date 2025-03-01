@@ -1,0 +1,1 @@
+// Rename your current signin page to this to temporarily disable it 
