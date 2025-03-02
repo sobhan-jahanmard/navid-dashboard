@@ -320,13 +320,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       {/* Discord ID search section */}
-      <div className="bg-gray-50 p-4 border rounded-md mb-6">
-        <h3 className="text-lg font-medium text-gray-700 mb-4">Seller Information</h3>
-        <div className="flex space-x-2 mb-4">
+      <div className="bg-indigo-100 p-6 border border-indigo-200 rounded-lg mb-8 shadow-sm">
+        <h3 className="text-lg font-semibold text-indigo-700 mb-5 border-b border-indigo-200 pb-2">
+          Seller Information
+        </h3>
+        <div className="flex space-x-3 mb-4">
           <div className="flex-grow">
-            <label htmlFor="discordId" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="discordId" className="block text-sm font-medium text-gray-700 mb-1">
               Discord ID
             </label>
             <input
@@ -337,7 +339,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               autoComplete="off"
               value={formData.discordId || ''}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white"
               placeholder="Enter Discord ID"
             />
           </div>
@@ -356,21 +358,21 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
         {/* Error message for seller info */}
         {sellerInfoError && (
-          <div className="mb-4 text-sm text-red-500">
+          <div className="mb-4 text-sm font-medium text-red-600 bg-red-50 p-3 rounded-md border border-red-100">
             {sellerInfoError}
           </div>
         )}
 
         {/* Success message when seller info is found */}
         {sellerInfoFound && !sellerInfoSaved && !sellerInfoError && (
-          <div className="mb-4 text-sm text-green-500">
+          <div className="mb-4 text-sm font-medium text-green-600 bg-green-50 p-3 rounded-md border border-green-100">
             Seller information found! Fields are read-only.
           </div>
         )}
 
         {/* Success message when seller info is saved */}
         {sellerInfoSaved && (
-          <div className="mb-4 text-sm text-green-500">
+          <div className="mb-4 text-sm font-medium text-green-600 bg-green-50 p-3 rounded-md border border-green-100">
             Seller information {formData.sellerInfoAction || 'saved'} successfully!
           </div>
         )}
@@ -432,10 +434,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
             {/* Card Number */}
-            <div>
-              <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
+            <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+              <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
                 Card Number
               </label>
               <input
@@ -446,14 +448,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 value={formData.cardNumber || ''}
                 onChange={handleChange}
                 disabled={!sellerInfoEditable}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${!sellerInfoEditable ? 'bg-gray-100' : ''}`}
+                className={`block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${!sellerInfoEditable ? 'bg-gray-50 text-gray-700' : 'bg-white'}`}
                 placeholder="Card Number"
               />
             </div>
 
             {/* IBAN */}
-            <div>
-              <label htmlFor="iban" className="block text-sm font-medium text-gray-700">
+            <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+              <label htmlFor="iban" className="block text-sm font-medium text-gray-700 mb-1">
                 IBAN
               </label>
               <input
@@ -464,7 +466,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 value={formData.iban || ''}
                 onChange={handleChange}
                 disabled={!sellerInfoEditable}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${!sellerInfoEditable ? 'bg-gray-100' : ''}`}
+                className={`block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${!sellerInfoEditable ? 'bg-gray-50 text-gray-700' : 'bg-white'}`}
                 placeholder="IR followed by 24 digits"
                 pattern="^IR\d{24}$"
                 title="IBAN must be in the format of IR followed by 24 digits"
@@ -473,8 +475,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             {/* Name on Card */}
-            <div>
-              <label htmlFor="nameOnCard" className="block text-sm font-medium text-gray-700">
+            <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+              <label htmlFor="nameOnCard" className="block text-sm font-medium text-gray-700 mb-1">
                 Name on Card
               </label>
               <input
@@ -485,14 +487,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 value={formData.nameOnCard || ''}
                 onChange={handleChange}
                 disabled={!sellerInfoEditable}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${!sellerInfoEditable ? 'bg-gray-100' : ''}`}
+                className={`block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${!sellerInfoEditable ? 'bg-gray-50 text-gray-700' : 'bg-white'}`}
                 placeholder="Name on Card"
               />
             </div>
 
             {/* Phone Number */}
-            <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+            <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number
               </label>
               <input
@@ -503,7 +505,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 value={formData.phoneNumber || ''}
                 onChange={handleChange}
                 disabled={!sellerInfoEditable}
-                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${!sellerInfoEditable ? 'bg-gray-100' : ''}`}
+                className={`block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 ${!sellerInfoEditable ? 'bg-gray-50 text-gray-700' : 'bg-white'}`}
                 placeholder="Phone Number"
               />
             </div>
@@ -512,12 +514,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       </div>
 
       {/* Payment details section */}
-      <div className="bg-white p-4 border rounded-md">
-        <h3 className="text-lg font-medium text-gray-700 mb-4">Payment Details</h3>
+      <div className="bg-emerald-100 p-6 border border-emerald-200 rounded-lg shadow-sm">
+        <h3 className="text-lg font-semibold text-emerald-700 mb-5 border-b border-emerald-200 pb-2">
+          Payment Details
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Game Name - New Field */}
-          <div>
-            <label htmlFor="game" className="block text-sm font-medium text-gray-700">
+          <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+            <label htmlFor="game" className="block text-sm font-medium text-gray-700 mb-1">
               Game Name
             </label>
             <input
@@ -527,14 +531,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               required
               value={formData.game || ''}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
               placeholder="Enter game name"
             />
           </div>
 
           {/* Amount */}
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+          <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
               Amount
             </label>
             <input
@@ -545,14 +549,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               autoComplete="off"
               value={formData.amount || ''}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
               placeholder="Payment amount"
             />
           </div>
 
           {/* Price */}
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+          <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
               Price
             </label>
             <input
@@ -563,14 +567,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               autoComplete="off"
               value={formData.price || ''}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
               placeholder="Price per unit"
             />
           </div>
 
           {/* Total in Rial (Read-only) */}
-          <div>
-            <label htmlFor="totalRial" className="block text-sm font-medium text-gray-700">
+          <div className="bg-yellow-50 p-3 rounded-md shadow-sm border border-yellow-200">
+            <label htmlFor="totalRial" className="block text-sm font-medium text-gray-700 mb-1">
               Total (Rial)
             </label>
             <input
@@ -579,15 +583,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               name="totalRial"
               readOnly
               value={formData.totalRial || ''}
-              className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+              className="block w-full rounded-md border-gray-300 bg-yellow-50 font-medium text-gray-900 text-lg"
               placeholder="Calculated automatically"
             />
-            <p className="mt-1 text-xs text-gray-500">Amount × Price × 10</p>
+            <p className="mt-1 text-xs text-gray-600">Amount × Price × 10</p>
           </div>
 
           {/* Payment Duration */}
-          <div>
-            <label htmlFor="paymentDuration" className="block text-sm font-medium text-gray-700">
+          <div className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
+            <label htmlFor="paymentDuration" className="block text-sm font-medium text-gray-700 mb-1">
               Payment Duration
             </label>
             <select
@@ -596,7 +600,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               required
               value={formData.paymentDuration}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
             >
               <option value="Instant">Instant</option>
               <option value="1 day">1 day</option>
@@ -608,8 +612,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           </div>
 
           {/* Note */}
-          <div className="md:col-span-2">
-            <label htmlFor="note" className="block text-sm font-medium text-gray-700">
+          <div className="md:col-span-2 bg-white p-3 rounded-md shadow-sm border border-gray-200">
+            <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-1">
               Note
             </label>
             <textarea
@@ -618,14 +622,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               rows={3}
               value={formData.note || ''}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
               placeholder="Additional notes"
             />
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end space-x-3 mt-6">
+      <div className="flex justify-end space-x-3 mt-8">
         <Button
           type="button"
           variant="secondary"
@@ -637,6 +641,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           type="submit"
           isLoading={isSubmitting}
           disabled={isSubmitting}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white"
         >
           {initialData ? 'Update Payment' : 'Create Payment'}
         </Button>
