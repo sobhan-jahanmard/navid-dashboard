@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import Button from '@/components/ui/Button';
 import { useSession } from "next-auth/react";
@@ -37,11 +37,35 @@ export default function GoldPaymentsTable({
   const router = useRouter();
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [discordIdFilter, setDiscordIdFilter] = useState<string>('');
+  const [filteredPayments, setFilteredPayments] = useState<GoldPayment[]>(goldPayments);
+
+  // Apply filters whenever goldPayments or discordIdFilter changes
+  useEffect(() => {
+    if (discordIdFilter) {
+      setFilteredPayments(goldPayments.filter(payment => 
+        payment.discordId && 
+        payment.discordId.toLowerCase().includes(discordIdFilter.toLowerCase())
+      ));
+    } else {
+      setFilteredPayments(goldPayments);
+    }
+  }, [goldPayments, discordIdFilter]);
 
   // Toggle expanded view
   const toggleExpand = (id: string) => {
     console.log('Toggling expansion for payment:', id);
     setExpandedPayment(expandedPayment === id ? null : id);
+  };
+
+  // Handle Discord ID filter change
+  const handleDiscordIdFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDiscordIdFilter(e.target.value);
+  };
+
+  // Clear filter function
+  const clearFilter = () => {
+    setDiscordIdFilter('');
   };
 
   // Format date helper
@@ -143,6 +167,36 @@ export default function GoldPaymentsTable({
         </div>
       )}
       
+      {/* Add Discord ID filter */}
+      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="w-full sm:w-auto">
+            <label htmlFor="discordIdFilter" className="block text-sm font-medium text-gray-700 mb-1">
+              Filter by Discord ID
+            </label>
+            <input
+              type="text"
+              id="discordIdFilter"
+              value={discordIdFilter}
+              onChange={handleDiscordIdFilterChange}
+              placeholder="Enter Discord ID"
+              className="p-2 border border-gray-300 rounded-md w-full"
+            />
+          </div>
+          
+          <button 
+            onClick={clearFilter}
+            className="mt-auto px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md text-sm"
+          >
+            Clear Filter
+          </button>
+          
+          <div className="ml-auto text-sm text-gray-600">
+            Showing {filteredPayments.length} of {goldPayments.length} payments
+          </div>
+        </div>
+      </div>
+      
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -158,14 +212,14 @@ export default function GoldPaymentsTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {goldPayments.length === 0 ? (
+            {filteredPayments.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                  No gold payments found.
+                  {discordIdFilter ? "No gold payments found with this Discord ID." : "No gold payments found."}
                 </td>
               </tr>
             ) : (
-              goldPayments.map((payment) => (
+              filteredPayments.map((payment) => (
                 <React.Fragment key={payment.id}>
                   <tr className={`
                     ${payment.status === 'Paid' ? 'bg-green-50' : 

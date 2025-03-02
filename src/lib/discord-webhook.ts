@@ -8,6 +8,7 @@ interface WebhookPayload {
   price: number | string;
   gheymat?: number | string;
   totalRial?: number | string;
+  finalAmount?: number | string;
   paymentDuration: string;
   game: string;
   admin?: string;
@@ -61,8 +62,10 @@ export async function sendToDiscordWebhook(paymentData: WebhookPayload): Promise
       { name: 'Price', value: `${formatValue(paymentData.price)} Toman`, inline: true },
     ];
     
-    // Add gheymat or totalRial (whichever is available)
-    if (paymentData.gheymat) {
+    // Add finalAmount, gheymat or totalRial (whichever is available)
+    if (paymentData.finalAmount) {
+      fields.push({ name: 'Gheymat', value: `${formatValue(paymentData.finalAmount)} Rial`, inline: true });
+    } else if (paymentData.gheymat) {
       fields.push({ name: 'Gheymat', value: formatValue(paymentData.gheymat), inline: true });
     } else if (paymentData.totalRial) {
       fields.push({ name: 'Total (Rial)', value: formatValue(paymentData.totalRial), inline: true });

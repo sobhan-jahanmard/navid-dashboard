@@ -150,6 +150,7 @@ export default function Dashboard() {
     status: 'all', // 'all', 'pending', 'active', 'cancelled'
     dueDate: 'all', // 'all', 'overdue', 'upcoming', 'thisWeek', 'thisMonth'
     timeframe: 'all', // 'all', 'today', 'yesterday', 'thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'
+    discordId: '', // New field for Discord ID filtering
   });
   
   // Add sort state
@@ -350,6 +351,14 @@ export default function Dashboard() {
     
     let filteredPayments = [...allPayments];
     
+    // Filter by Discord ID
+    if (filters.discordId) {
+      filteredPayments = filteredPayments.filter(payment => 
+        payment.discordId && 
+        payment.discordId.toLowerCase().includes(filters.discordId.toLowerCase())
+      );
+    }
+    
     // Filter by status
     if (filters.status !== 'all') {
       if (filters.status === 'active') {
@@ -508,7 +517,7 @@ export default function Dashboard() {
   }, [goldPayments, goldPaymentsTimeframe]);
 
   // Handle filter changes
-  const handleFilterChange = (filterType: 'status' | 'dueDate' | 'timeframe', value: string) => {
+  const handleFilterChange = (filterType: 'status' | 'dueDate' | 'timeframe' | 'discordId', value: string) => {
     setFilters(prev => ({
       ...prev,
       [filterType]: value
@@ -985,6 +994,17 @@ export default function Dashboard() {
             <div className="bg-white p-3 md:p-4 rounded-lg shadow mb-4 md:mb-6 w-full">
               <h2 className="text-lg font-semibold mb-3">Filter & Sort Payments</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div>
+                  <label htmlFor="filter-discord" className="block text-sm font-medium text-gray-700 mb-1">Discord ID</label>
+                  <input
+                    id="filter-discord"
+                    type="text"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    placeholder="Search by Discord ID"
+                    value={filters.discordId}
+                    onChange={(e) => handleFilterChange('discordId', e.target.value)}
+                  />
+                </div>
                 <div>
                   <label htmlFor="filter-status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <select
