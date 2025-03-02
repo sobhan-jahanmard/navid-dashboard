@@ -5,7 +5,7 @@
 // Discord API endpoints
 const DISCORD_API = 'https://discord.com/api/v10';
 const GUILD_ID = '1219645545115680888';
-const SUPPORT_ROLE_ID = '1231894640802791424';
+const SUPPORT_ROLE_ID = '1318578831543504986';
 
 /**
  * Get user's roles in the specified Discord guild
