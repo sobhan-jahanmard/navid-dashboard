@@ -1080,6 +1080,9 @@ export default function Dashboard() {
                           Submit Date
                         </th>
                         <th scope="col" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500 text-left">
+                          Discord ID
+                        </th>
+                        <th scope="col" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500 text-left">
                           Amount
                         </th>
                         <th scope="col" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500 text-left">
@@ -1111,7 +1114,7 @@ export default function Dashboard() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {payments.length === 0 ? (
                         <tr>
-                          <td colSpan={10} className="px-6 py-4 text-center text-gray-500">
+                          <td colSpan={11} className="px-6 py-4 text-center text-gray-500">
                             No payments found matching your filters.
                           </td>
                         </tr>
@@ -1140,6 +1143,11 @@ export default function Dashboard() {
                                   </div>
                                   <div className="text-xs text-gray-500">
                                     {formatTime(payment.submitDate || payment.timestamp)}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-900">
+                                    {payment.discordId || 'N/A'}
                                   </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
@@ -1254,7 +1262,7 @@ export default function Dashboard() {
                               
                               {expandedPayment === payment && (
                                 <tr>
-                                  <td colSpan={10} className="px-6 py-4 bg-gray-50">
+                                  <td colSpan={11} className="px-6 py-4 bg-gray-50">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                       <div>
                                         <h4 className="text-sm font-medium text-gray-500">Payment Details</h4>
@@ -1313,7 +1321,21 @@ export default function Dashboard() {
                                           </div>
                                           <div>
                                             <span className="text-xs text-gray-500">IBAN:</span>
-                                            <p className="text-sm text-gray-900">{payment.iban || 'N/A'}</p>
+                                            <p className="text-sm text-gray-900">{payment.iban || 'N/A'}
+                                              {payment.iban && (
+                                                <button
+                                                  onClick={() => {
+                                                    navigator.clipboard.writeText(payment.iban || '');
+                                                    // Optional: Show a small success message or toast
+                                                    alert('IBAN copied to clipboard!');
+                                                  }}
+                                                  className="ml-2 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-0.5 rounded"
+                                                  title="Copy IBAN"
+                                                >
+                                                  Copy
+                                                </button>
+                                              )}
+                                            </p>
                                           </div>
                                           <div>
                                             <span className="text-xs text-gray-500">Notes:</span>
@@ -1346,7 +1368,20 @@ export default function Dashboard() {
                     <div><span className="font-medium">Discord ID:</span> {expandedPayment.discordId || 'N/A'}</div>
                     <div><span className="font-medium">Phone:</span> {expandedPayment.phone || 'N/A'}</div>
                     <div><span className="font-medium">Card Number:</span> {expandedPayment.cardNumber || 'N/A'}</div>
-                    <div><span className="font-medium">IBAN:</span> {expandedPayment.iban || 'N/A'}</div>
+                    <div><span className="font-medium">IBAN:</span> {expandedPayment.iban || 'N/A'}
+                      {expandedPayment.iban && (
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(expandedPayment.iban || '');
+                            alert('IBAN copied to clipboard!');
+                          }}
+                          className="ml-2 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-0.5 rounded"
+                          title="Copy IBAN"
+                        >
+                          Copy
+                        </button>
+                      )}
+                    </div>
                     <div><span className="font-medium">Note:</span> {expandedPayment.note || 'N/A'}</div>
                   </div>
                 </div>
