@@ -125,13 +125,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       return;
     }
     
-    // Handle IBAN input for validation (IR + 16 digits only)
+    // Handle IBAN input for validation (IR + 24 digits only)
     if (name === 'iban') {
       // Always uppercase the "IR" part
       const uppercaseValue = value.toUpperCase();
       
-      // Enforce the pattern: IR followed by up to 16 digits
-      const pattern = /^IR\d{0,16}$/;
+      // Enforce the pattern: IR followed by up to 24 digits
+      const pattern = /^IR\d{0,24}$/;
       if (pattern.test(uppercaseValue) || uppercaseValue === '' || uppercaseValue === 'I' || uppercaseValue === 'IR') {
         setFormData((prev) => ({ ...prev, [name]: uppercaseValue }));
       }
@@ -236,8 +236,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     }
     
     // Validate IBAN format
-    if (formData.iban && !/^IR\d{16}$/.test(formData.iban)) {
-      setSellerInfoError('IBAN must be in the format of IR followed by 16 digits (IR + 16 numbers)');
+    if (formData.iban && !/^IR\d{24}$/.test(formData.iban)) {
+      setSellerInfoError('IBAN must be in the format of IR followed by 24 digits (IR + 24 numbers)');
       return;
     }
 
@@ -295,8 +295,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     e.preventDefault();
     
     // Validate IBAN format
-    if (formData.iban && !/^IR\d{16}$/.test(formData.iban)) {
-      setSellerInfoError('IBAN must be in the format of IR followed by 16 digits (IR + 16 numbers)');
+    if (formData.iban && !/^IR\d{24}$/.test(formData.iban)) {
+      setSellerInfoError('IBAN must be in the format of IR followed by 24 digits (IR + 24 numbers)');
       return;
     }
     
@@ -334,6 +334,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               id="discordId"
               name="discordId"
               required
+              autoComplete="off"
               value={formData.discordId || ''}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -464,11 +465,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 onChange={handleChange}
                 disabled={!sellerInfoEditable}
                 className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${!sellerInfoEditable ? 'bg-gray-100' : ''}`}
-                placeholder="IR followed by 16 digits"
-                pattern="^IR\d{16}$"
-                title="IBAN must be in the format of IR followed by 16 digits"
+                placeholder="IR followed by 24 digits"
+                pattern="^IR\d{24}$"
+                title="IBAN must be in the format of IR followed by 24 digits"
               />
-              <p className="mt-1 text-xs text-gray-500">Format: IR followed by 16 digits</p>
+              <p className="mt-1 text-xs text-gray-500">Format: IR followed by 24 digits</p>
             </div>
 
             {/* Name on Card */}
@@ -541,6 +542,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               id="amount"
               name="amount"
               required
+              autoComplete="off"
               value={formData.amount || ''}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -558,6 +560,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               id="price"
               name="price"
               required
+              autoComplete="off"
               value={formData.price || ''}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"

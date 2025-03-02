@@ -86,13 +86,13 @@ export async function sendToDiscordWebhook(paymentData: WebhookPayload): Promise
     
     // Add ID fields
     fields.push(
-      { name: 'ID', value: paymentData.discordId || 'N/A', inline: false },
-      { name: 'Payment ID', value: paymentData.id || 'N/A', inline: false }
+      { name: 'id', value: paymentData.discordId || 'N/A', inline: false },
+      { name: 'payment id', value: paymentData.id || 'N/A', inline: false }
     );
     
     // Add action if available
     if (paymentData.action) {
-      fields.push({ name: 'Action', value: paymentData.action, inline: false });
+      fields.push({ name: 'action', value: paymentData.action=="added" ? "create" : paymentData.action, inline: false });
     } else if (paymentData.status) {
       fields.push({ name: 'Status', value: paymentData.status, inline: false });
     }

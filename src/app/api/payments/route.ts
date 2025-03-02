@@ -83,9 +83,9 @@ export async function POST(request: NextRequest) {
         
         try {
           // Validate IBAN format
-          if (!/^IR\d{16}$/.test(paymentData.iban)) {
+          if (!/^IR\d{24}$/.test(paymentData.iban)) {
             return NextResponse.json({ 
-              error: 'IBAN must be in the format of IR followed by 16 digits' 
+              error: 'IBAN must be in the format of IR followed by 24 digits' 
             }, { status: 400 });
           }
           
@@ -104,6 +104,29 @@ export async function POST(request: NextRequest) {
           // Continue with payment even if seller info fails
         }
       }
+    }
+    
+    // Validate required fields
+    const requiredFields = [
+      "amount",
+      "price",
+      "totalRial",
+      "user",
+      "discordId",
+      "iban",
+      "paymentDuration",
+      "game",
+    ];
+    
+    for (const field of requiredFields) {
+      if (!paymentData[field]) {
+        return NextResponse.json({ error: `${field} is required` }, { status: 400 });
+      }
+    }
+    
+    // Validate IBAN format
+    if (paymentData.iban && !/^IR\d{24}$/.test(paymentData.iban)) {
+      return NextResponse.json({ error: 'IBAN must be in the format of IR followed by 24 digits' }, { status: 400 });
     }
     
     const result = await addPayment(paymentData);

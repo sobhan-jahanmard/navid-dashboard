@@ -213,20 +213,33 @@ export async function addPayment(payment: {
   date?: string;
 }) {
   try {
+    // Validate IBAN (must be provided and in correct format)
+    if (!payment.iban) {
+      throw new Error("IBAN is required");
+    }
+    
+    if (!/^IR\d{24}$/.test(payment.iban)) {
+      throw new Error("IBAN must be in the format of IR followed by 24 digits");
+    }
+
     const sheets = await getSheetsClient();
 
     // Ensure default values
     const status = payment.status || "Pending";
-    // Use current date for timestamp
-    const date = new Date().toISOString();
+    
+    // Format current date as DD/MM/YYYY HH:MM:SS
+    const now = new Date();
+    const formattedDate = 
+      `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ` +
+      `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
     const row = [
       payment.id,
-      payment.amount,
-      payment.price,
+      payment.amount, // No auto-complete for Amount
+      payment.price, // No auto-complete for Price
       payment.totalRial,
       payment.user,
-      date, // Current date
+      formattedDate, // Current date in DD/MM/YYYY HH:MM:SS format
       payment.discordId,
       payment.cardNumber,
       payment.iban,
