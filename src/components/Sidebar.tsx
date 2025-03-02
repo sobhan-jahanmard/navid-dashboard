@@ -62,8 +62,7 @@ export default function Sidebar() {
                 width={40} 
                 height={40} 
                 className="rounded-full"
-                priority={false}
-                loading="lazy"
+                priority={true}
               />
             </div>
             <h1 className="text-xl font-bold ml-3">Celestial Shop</h1>

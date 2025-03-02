@@ -145,6 +145,7 @@ export default function GoldPaymentsTable({
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discord ID</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name-Realm</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
@@ -156,7 +157,7 @@ export default function GoldPaymentsTable({
           <tbody className="bg-white divide-y divide-gray-200">
             {goldPayments.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
                   No gold payments found.
                 </td>
               </tr>
@@ -169,6 +170,9 @@ export default function GoldPaymentsTable({
                   }>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{formatDate(payment.date)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{payment.discordId || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap min-w-[180px]">
                       <div className="text-sm text-gray-900">{payment.nameRealm}</div>
@@ -272,7 +276,7 @@ export default function GoldPaymentsTable({
                   </tr>
                   {expandedPayment === payment.id && (
                     <tr>
-                      <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                      <td colSpan={8} className="px-6 py-4 bg-gray-50">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <h4 className="text-sm font-medium text-gray-500">Payment Details</h4>
