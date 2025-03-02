@@ -17,8 +17,68 @@
   }
 }
 
+/* Critical rendering path CSS - Load this first */
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Optimize for content visibility to improve LCP */
+.main-content {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px; /* Slightly smaller base font size on mobile */
+  }
+  
+  /* Improve tap targets on mobile */
+  button, a, select, input {
+    min-height: 44px;
+  }
+}
+
+/* Utility classes for better table display on mobile */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal overflow */
+.overflow-guard {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Optimize animations for better performance */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Lightweight loading placeholder styles */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

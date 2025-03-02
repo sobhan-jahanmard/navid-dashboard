@@ -7,11 +7,15 @@ interface GoldPayment {
   id: string;
   date: string;
   discordId: string;
-  nameRealm: string;
+  nameRealm: string; // Name-Realm field
   amount: string;
+  note: string;
   category: string;
+  admin: string;
+  paymentId: string; // New field
   status: string;
-  paidBy: string;
+  whoPaid: string; // Renamed from paidBy
+  paidBy?: string; // For backward compatibility
 }
 
 interface GoldPaymentsTableProps {
@@ -41,8 +45,23 @@ export default function GoldPaymentsTable({
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     try {
+      // Check if it's already in European format (DD/MM/YYYY)
+      if (dateString.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+        // It's already in the correct format, just return it
+        // Optionally trim the time part if present
+        return dateString.split(' ')[0];
+      }
+      
+      // Otherwise parse and format
       const date = new Date(dateString);
-      return isNaN(date.getTime()) ? dateString : format(date, 'PPP');
+      if (isNaN(date.getTime())) return dateString;
+      
+      // Explicitly format as DD/MM/YYYY for European format
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}/${month}/${year}`;
     } catch (error) {
       return 'Invalid Date';
     }
@@ -62,14 +81,15 @@ export default function GoldPaymentsTable({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          status: newStatus,
-          paidBy: session?.user?.username || session?.user?.name
+          status: newStatus
         }),
       });
       
       if (!response.ok) {
         throw new Error('Failed to update gold payment status');
       }
+      
+      console.log(`Gold payment ${id} status updated to ${newStatus}`);
       
       // Refresh the page to show updated data
       window.location.reload();
@@ -125,17 +145,18 @@ export default function GoldPaymentsTable({
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name/Realm</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name-Realm</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Who Paid</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {goldPayments.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                   No gold payments found.
                 </td>
               </tr>
@@ -151,7 +172,6 @@ export default function GoldPaymentsTable({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap min-w-[180px]">
                       <div className="text-sm text-gray-900">{payment.nameRealm}</div>
-                      <div className="text-xs text-gray-500">{payment.discordId}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
                       <div className="text-sm text-gray-900">
@@ -165,66 +185,120 @@ export default function GoldPaymentsTable({
                         }
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap min-w-[120px]">
-                      <div className="text-sm text-gray-900">{payment.category}</div>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{payment.category || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {session?.user?.role === 'SUPPORT' ? (
-                        <select
-                          value={payment.status || 'Pending'}
-                          onChange={(e) => handleUpdateStatus(payment.id, e.target.value)}
-                          disabled={updatingStatus === payment.id}
-                          className={`px-2 py-1 text-xs font-semibold rounded border ${
-                            payment.status === 'Paid' 
-                              ? 'bg-green-100 text-green-800 border-green-300' 
-                              : payment.status === 'Cancelled'
-                                ? 'bg-red-100 text-red-800 border-red-300'
-                                : 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                          }`}
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Paid">Paid</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      ) : (
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          payment.status === 'Paid' 
-                            ? 'bg-green-100 text-green-800' 
-                            : payment.status === 'Cancelled'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {payment.status || 'Pending'}
-                        </span>
-                      )}
-                      {payment.paidBy && (payment.status === 'Paid' || payment.status === 'Cancelled') && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          By: {payment.paidBy}
-                        </div>
-                      )}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        payment.status === 'Paid' 
+                          ? 'bg-green-100 text-green-800' 
+                          : payment.status === 'Cancelled'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {payment.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{payment.whoPaid || payment.paidBy || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => toggleExpand(payment.id)}
-                        disabled={updatingStatus === payment.id}
-                      >
-                        {expandedPayment === payment.id ? 'Hide' : 'View'}
-                      </Button>
+                      <div className="flex flex-col md:flex-row space-y-1 md:space-y-0 md:space-x-1">
+                        {session?.user?.role === 'SUPPORT' && (
+                          <>
+                            {payment.status === 'Paid' ? (
+                              <>
+                                <button
+                                  onClick={() => handleUpdateStatus(payment.id, 'Pending')}
+                                  disabled={updatingStatus === payment.id}
+                                  className="text-white bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
+                                >
+                                  Mark Pending
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateStatus(payment.id, 'Cancelled')}
+                                  disabled={updatingStatus === payment.id}
+                                  className="text-white bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            ) : payment.status === 'Cancelled' ? (
+                              <>
+                                <button
+                                  onClick={() => handleUpdateStatus(payment.id, 'Paid')}
+                                  disabled={updatingStatus === payment.id}
+                                  className="text-white bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                                >
+                                  Mark Paid
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateStatus(payment.id, 'Pending')}
+                                  disabled={updatingStatus === payment.id}
+                                  className="text-white bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
+                                >
+                                  Mark Pending
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => handleUpdateStatus(payment.id, 'Paid')}
+                                  disabled={updatingStatus === payment.id}
+                                  className="text-white bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
+                                >
+                                  Mark Paid
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateStatus(payment.id, 'Cancelled')}
+                                  disabled={updatingStatus === payment.id}
+                                  className="text-white bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            )}
+                          </>
+                        )}
+                        <button
+                          onClick={() => toggleExpand(payment.id)}
+                          disabled={updatingStatus === payment.id}
+                          className="text-indigo-600 hover:text-indigo-900 text-xs bg-gray-100 px-2 py-1 rounded"
+                        >
+                          {expandedPayment === payment.id ? 'Hide' : 'View'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {expandedPayment === payment.id && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 bg-gray-50">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <td colSpan={7} className="px-6 py-4 bg-gray-50">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <h4 className="text-sm font-medium text-gray-500">Payment Details</h4>
                             <p className="mt-1 text-sm text-gray-900">
                               <span className="font-medium">ID:</span> {payment.id}
                             </p>
                             <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Discord ID:</span> {payment.discordId}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Payment ID:</span> {payment.paymentId || 'N/A'}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
                               <span className="font-medium">Date:</span> {formatDate(payment.date)}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500">Additional Info</h4>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Name/Realm:</span> {payment.nameRealm}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Category:</span> {payment.category}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Note:</span> {payment.note || 'N/A'}
                             </p>
                             <p className="mt-1 text-sm text-gray-900">
                               <span className="font-medium">Amount:</span> {
@@ -237,26 +311,18 @@ export default function GoldPaymentsTable({
                                     })
                               }
                             </p>
-                            <p className="mt-1 text-sm text-gray-900">
-                              <span className="font-medium">Category:</span> {payment.category}
-                            </p>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium text-gray-500">User Information</h4>
-                            <p className="mt-1 text-sm text-gray-900">
-                              <span className="font-medium">Name/Realm:</span> {payment.nameRealm}
-                            </p>
-                            <p className="mt-1 text-sm text-gray-900">
-                              <span className="font-medium">Discord ID:</span> {payment.discordId}
-                            </p>
+                            <h4 className="text-sm font-medium text-gray-500">Admin Info</h4>
                             <p className="mt-1 text-sm text-gray-900">
                               <span className="font-medium">Status:</span> {payment.status || 'Pending'}
                             </p>
-                            {payment.paidBy && (
-                              <p className="mt-1 text-sm text-gray-900">
-                                <span className="font-medium">Who {payment.status === 'Cancelled' ? 'Cancelled' : 'Paid'}:</span> {payment.paidBy}
-                              </p>
-                            )}
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Admin:</span> {payment.admin || 'N/A'}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-900">
+                              <span className="font-medium">Who Paid:</span> {payment.whoPaid || payment.paidBy || 'N/A'}
+                            </p>
                           </div>
                         </div>
                       </td>

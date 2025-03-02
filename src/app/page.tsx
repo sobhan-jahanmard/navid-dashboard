@@ -10,7 +10,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
         <h1 className="mb-6 text-center text-3xl font-bold">
-          <a href="https://discord.gg/celestial" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
+          <a href="https://discord.gg/Zjweus8Kdx" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
             Celestial Shop
           </a>
         </h1>

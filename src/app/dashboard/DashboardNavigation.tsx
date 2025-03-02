@@ -3,12 +3,17 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function DashboardNavigation() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   const isAdmin = session?.user?.role === "SUPPORT";
 
@@ -35,13 +40,13 @@ export default function DashboardNavigation() {
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-white border-b border-gray-200 fixed w-full top-0 z-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
+            <div className="flex-shrink-0 flex items-center pl-12 md:pl-0">
               <a
-                href="https://discord.gg/celestial"
+                href="https://discord.gg/Zjweus8Kdx"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xl font-bold text-indigo-600"
@@ -101,6 +106,7 @@ export default function DashboardNavigation() {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
               <svg
@@ -138,7 +144,11 @@ export default function DashboardNavigation() {
         </div>
       </div>
 
-      <div className={`${isMobileMenuOpen ? "block" : "hidden"} sm:hidden`}>
+      <div 
+        className={`${
+          isMobileMenuOpen ? "block" : "hidden"
+        } sm:hidden absolute w-full bg-white shadow-lg z-30`}
+      >
         <div className="pt-2 pb-3 space-y-1">
           {navigation.map((item) => (
             <Link

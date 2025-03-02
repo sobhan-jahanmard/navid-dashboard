@@ -9,6 +9,8 @@ export function calculateExpectedPaymentDate(paymentTime: string): Date {
   switch (paymentTime) {
     case 'Instant':
       return now;
+    case '1 day':
+      return addDays(now, 1);
     case '1-2 days':
       return addDays(now, 2);
     case '2-3 days':
@@ -71,6 +73,7 @@ export function getPaymentDurationRange(): { min: number; max: number } {
 export function getPaymentDurationOptions(): string[] {
   return [
     'Instant',
+    '1 day',
     '1-2 days',
     '2-3 days',
     '3-5 days',

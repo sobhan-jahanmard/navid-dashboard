@@ -15,9 +15,9 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-100">
       <DashboardNavigation />
-      <div className="py-10">
+      <div className="py-6 md:py-10">
         <main>
-          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+          <div className="w-full max-w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8">
             {children}
           </div>
         </main>

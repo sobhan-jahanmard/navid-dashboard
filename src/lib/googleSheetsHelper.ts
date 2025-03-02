@@ -265,7 +265,7 @@ export async function getPayments() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "Payment!A:O", // Updated range to include only necessary columns
+      range: "Payment!A:Q", // Updated range to include all 16 columns
     });
 
     const rows = response.data.values;
@@ -293,37 +293,36 @@ export async function getPayments() {
 
     return dataRows.map((row) => {
       // Ensure the row has enough elements
-      if (row.length < 15) {
-        while (row.length < 15) {
+      if (row.length < 17) {
+        while (row.length < 17) {
           row.push("");
         }
       }
 
-      // Map each row to a payment object
+      // Map each row to a payment object according to the new indices
       const status = row[14] || "Pending";
       const isPaid = status === "Paid";
-
-      // Parse the timestamp
-      const timestamp = row[5] || new Date().toISOString();
 
       return {
         id: row[0],
         amount: row[1],
         price: row[2],
-        totalRial: row[3],
+        finalAmount: row[3], // New field
         user: row[4],
-        timestamp: timestamp,
+        submitDate: row[5], // Renamed from timestamp
+        timestamp: row[5], // For backward compatibility
         discordId: row[6],
         cardNumber: row[7],
         iban: row[8],
-        nameOnCard: row[9],
-        phoneNumber: row[10],
+        nameOnCard: row[9], // Renamed to match field
+        phoneNumber: row[10], // Renamed to match field
         paymentDuration: row[11],
         game: row[12],
         note: row[13],
         status: status,
+        whoPaidCancelled: row[15] || "", // New field for who paid/cancelled
         paid: isPaid, // Derive from status for backward compatibility
-        dueDate: calculateDueDate(timestamp, row[11]), // Calculate due date
+        dueDate: row[16] || "", // Due date from the spreadsheet (column Q)
       };
     });
   } catch (error) {
@@ -350,6 +349,8 @@ export async function updatePayment(
     note?: string;
     status?: string;
     timestamp?: string;
+    whoPaidCancelled?: string;
+    columnToUpdate?: string; // New parameter for specifying a column to update
   }
 ) {
   try {
@@ -358,7 +359,7 @@ export async function updatePayment(
     // First get the current payment data
     const getResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "Payment!A:O",
+      range: "Payment!A:Q", // Expanded to include column Q (due date)
     });
 
     const rows = getResponse.data.values;
@@ -382,7 +383,41 @@ export async function updatePayment(
       throw new Error(`Payment with ID ${paymentId} not found`);
     }
 
-    // Preserve current values for fields not included in the update
+    // If only status is being updated, just update that column
+    if (payment.status && Object.keys(payment).length <= 3 && (Object.keys(payment).includes('status') || Object.keys(payment).includes('columnToUpdate') || Object.keys(payment).includes('whoPaidCancelled'))) {
+      // Update only status column (column O)
+      const statusUpdateResponse = await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `Payment!O${rowIndex}`,
+        valueInputOption: "USER_ENTERED",
+        requestBody: {
+          values: [[payment.status]],
+        },
+      });
+
+      if (statusUpdateResponse.status !== 200) {
+        throw new Error("Failed to update payment status");
+      }
+      
+      console.log(`Updated only status column for payment ${paymentId} to ${payment.status}`);
+      
+      // Return the current payment with updated status
+      return {
+        ...currentPayment.reduce((obj, val, idx) => {
+          const keys = ['id', 'amount', 'price', 'finalAmount', 'user', 'submitDate', 'discordId', 'cardNumber', 'iban', 'nameOnCard', 'phoneNumber', 'paymentDuration', 'game', 'note', 'status', 'whoPaidCancelled'];
+          if (idx < keys.length) {
+            obj[keys[idx]] = val;
+          }
+          return obj;
+        }, {}),
+        status: payment.status,
+        paid: payment.status === "Paid",
+        timestamp: currentPayment[5], // For backward compatibility
+        dueDate: currentPayment[16] || "", // Use the due date from the current payment
+      };
+    }
+
+    // For full updates, preserve current values for fields not included in the update
     const mergedPayment = {
       id: paymentId,
       amount: payment.amount !== undefined ? payment.amount : currentPayment[1],
@@ -400,6 +435,7 @@ export async function updatePayment(
       game: payment.game || currentPayment[12],
       note: payment.note !== undefined ? payment.note : currentPayment[13],
       status: payment.status || currentPayment[14] || "Pending",
+      whoPaidCancelled: payment.whoPaidCancelled || currentPayment[15] || "",
     };
 
     const row = [
@@ -418,11 +454,14 @@ export async function updatePayment(
       mergedPayment.game,
       mergedPayment.note,
       mergedPayment.status,
+      mergedPayment.whoPaidCancelled,
+      currentPayment[16] || "", // Preserve due date from current payment
     ];
 
+    // Standard update for all columns
     const updateResponse = await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `Payment!A${rowIndex}:O${rowIndex}`,
+      range: `Payment!A${rowIndex}:Q${rowIndex}`,
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: [row],
@@ -433,14 +472,42 @@ export async function updatePayment(
       throw new Error("Failed to update payment");
     }
 
+    // Handle specific column update if requested
+    if (payment.columnToUpdate) {
+      const columnLetter = payment.columnToUpdate;
+      let valueToUpdate = "";
+      
+      // Determine what value to put in the specified column
+      if (columnLetter === 'P') {
+        // For column P, use whoPaidCancelled if payment status is updated
+        if (payment.status) {
+          valueToUpdate = payment.whoPaidCancelled || "";
+        }
+      }
+      
+      if (valueToUpdate) {
+        const columnUpdateResponse = await sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `Payment!${columnLetter}${rowIndex}`,
+          valueInputOption: "USER_ENTERED",
+          requestBody: {
+            values: [[valueToUpdate]],
+          },
+        });
+        
+        if (columnUpdateResponse.status !== 200) {
+          console.warn(`Failed to update column ${columnLetter} for payment ${paymentId}`);
+        } else {
+          console.log(`Successfully updated column ${columnLetter} for payment ${paymentId} with value: ${valueToUpdate}`);
+        }
+      }
+    }
+
     // Return the updated payment with the due date calculated
     return {
       ...mergedPayment,
       paid: mergedPayment.status === "Paid",
-      dueDate: calculateDueDate(
-        mergedPayment.timestamp,
-        mergedPayment.paymentDuration
-      ),
+      dueDate: currentPayment[16] || "", // Use the due date from the current payment
     };
   } catch (error) {
     console.error("Error updating payment:", error);
@@ -503,7 +570,7 @@ export async function getGoldPayments() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "Gold Payment!A:G", // Range for gold payments
+      range: "Gold Payment!A:J", // Range for gold payments (10 columns)
     });
 
     const rows = response.data.values;
@@ -531,35 +598,40 @@ export async function getGoldPayments() {
 
     return dataRows.map((row, index) => {
       // Ensure the row has enough elements
-      if (row.length < 7) {
-        while (row.length < 7) {
+      if (row.length < 10) {
+        while (row.length < 10) {
           row.push("");
         }
       }
 
-      // Map status value from 'Paid?' column
-      let status = "Pending";
-      const paidValue = (row[5] || "").toString().trim().toLowerCase();
-
-      if (
-        paidValue === "yes" ||
-        paidValue === "true" ||
-        paidValue === "completed"
-      ) {
+      // Map status value from 'Status' column (index 8)
+      let status = row[8] || "Pending";
+      if (status.toString().trim().toLowerCase() === "yes" ||
+          status.toString().trim().toLowerCase() === "true" ||
+          status.toString().trim().toLowerCase() === "completed" ||
+          status.toString().trim().toLowerCase() === "paid") {
         status = "Paid";
-      } else if (paidValue === "cancelled" || paidValue === "cancel") {
+      } else if (status.toString().trim().toLowerCase() === "cancelled" || 
+                 status.toString().trim().toLowerCase() === "cancel") {
         status = "Cancelled";
+      } else if (status.toString().trim() === "" || 
+                 status.toString().trim().toLowerCase() === "pending") {
+        status = "Pending";
       }
 
       return {
-        id: `gold-${row[1]}-${index}-${new Date().getTime()}`, // Generate ID from Discord ID, index, and timestamp
+        id: row[7] || `gold-${row[1]}-${index}-${new Date().getTime()}`, // Use Payment ID if available or generate one
         date: row[0] || new Date().toISOString(),
         discordId: row[1] || "",
         nameRealm: row[2] || "",
         amount: row[3] || "",
-        category: row[4] || "",
+        note: row[4] || "",
+        category: row[5] || "",
+        admin: row[6] || "",
+        paymentId: row[7] || "",
         status: status,
-        paidBy: row[6] || "",
+        whoPaid: row[9] || "", // Who Paid field
+        paidBy: row[9] || "", // For backward compatibility
       };
     });
   } catch (error) {
@@ -574,6 +646,7 @@ export async function updateGoldPaymentStatus(
   update: {
     status: string;
     paidBy?: string;
+    columnToUpdate?: string; // New parameter for specifying a column to update
   }
 ) {
   try {
@@ -591,7 +664,7 @@ export async function updateGoldPaymentStatus(
     // First get all gold payments
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "Gold Payment!A:G",
+      range: "Gold Payment!A:J", // Expanded to include column J
     });
 
     const rows = response.data.values;
@@ -623,7 +696,7 @@ export async function updateGoldPaymentStatus(
       statusValue = "cancelled";
     }
 
-    // Update the status column (column F) and paidBy column (column G)
+    // Update only the status column (column F) for each matching row
     const updatePromises = matchingRows.map(async ({ rowIndex }) => {
       // Update status (column F)
       await sheets.spreadsheets.values.update({
@@ -634,96 +707,18 @@ export async function updateGoldPaymentStatus(
           values: [[statusValue]],
         },
       });
-
-      // Update paidBy (column G) if provided
-      if (update.paidBy) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: SPREADSHEET_ID,
-          range: `Gold Payment!G${rowIndex}`,
-          valueInputOption: "USER_ENTERED",
-          requestBody: {
-            values: [[update.paidBy]],
-          },
-        });
-      }
+      
+      console.log(`Updated only status column for gold payment row ${rowIndex} to ${statusValue}`);
     });
 
     await Promise.all(updatePromises);
 
     return {
       success: true,
-      message: `Updated ${matchingRows.length} gold payment(s) for Discord ID ${discordId}`,
+      message: `Updated status for ${matchingRows.length} gold payment(s) for Discord ID ${discordId}`,
     };
   } catch (error) {
     console.error("Error updating gold payment status:", error);
     throw error;
-  }
-}
-
-// Function to calculate due date based on timestamp and payment duration
-export function calculateDueDate(
-  timestamp: string,
-  paymentDuration?: string | number
-): string {
-  try {
-    if (!timestamp) {
-      return "";
-    }
-
-    // Create date from timestamp
-    const date = new Date(timestamp);
-    if (isNaN(date.getTime())) {
-      console.error("Invalid timestamp for calculating due date:", timestamp);
-      return "";
-    }
-
-    // Default to 1 month if no duration specified
-    if (!paymentDuration) {
-      const dueDate = new Date(date);
-      dueDate.setMonth(dueDate.getMonth() + 1);
-      return dueDate.toISOString();
-    }
-
-    const dueDate = new Date(date);
-
-    // Handle different duration formats
-    if (typeof paymentDuration === "number") {
-      // Assume number is in months
-      dueDate.setMonth(dueDate.getMonth() + paymentDuration);
-    } else {
-      // Handle string format like "3 months", "1 year", etc.
-      const durationLower = paymentDuration.toLowerCase();
-
-      if (durationLower.includes("day") || durationLower.includes("روز")) {
-        const days = parseInt(durationLower.match(/\d+/)?.[0] || "7", 10);
-        dueDate.setDate(dueDate.getDate() + days);
-      } else if (
-        durationLower.includes("week") ||
-        durationLower.includes("هفته")
-      ) {
-        const weeks = parseInt(durationLower.match(/\d+/)?.[0] || "1", 10);
-        dueDate.setDate(dueDate.getDate() + weeks * 7);
-      } else if (
-        durationLower.includes("month") ||
-        durationLower.includes("ماه")
-      ) {
-        const months = parseInt(durationLower.match(/\d+/)?.[0] || "1", 10);
-        dueDate.setMonth(dueDate.getMonth() + months);
-      } else if (
-        durationLower.includes("year") ||
-        durationLower.includes("سال")
-      ) {
-        const years = parseInt(durationLower.match(/\d+/)?.[0] || "1", 10);
-        dueDate.setFullYear(dueDate.getFullYear() + years);
-      } else {
-        // If format not recognized, default to 1 month
-        dueDate.setMonth(dueDate.getMonth() + 1);
-      }
-    }
-
-    return dueDate.toISOString();
-  } catch (error) {
-    console.error("Error calculating due date:", error);
-    return "";
   }
 }

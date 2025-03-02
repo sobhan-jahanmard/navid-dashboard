@@ -73,6 +73,34 @@ export async function PUT(
     const payments = await getCachedPayments();
     const existingPayment = payments.find(p => p.id === paymentId || p._id === paymentId);
     
+    // Check if this is a status update only
+    if (paymentData.status) {
+      // If only updating status, just pass the status field
+      console.log(`✅ Updating payment status with ID: ${paymentId} to ${paymentData.status}`);
+      const result = await updatePayment(paymentId, { status: paymentData.status });
+      
+      // Invalidate the payments cache after update
+      invalidatePaymentsCache();
+      
+      // Send Discord webhook notification for status updates
+      try {
+        await sendToDiscordWebhook({
+          ...existingPayment,
+          id: paymentId,
+          timestamp: new Date(),
+          admin: session.user.username || session.user.name,
+          action: paymentData.status.toLowerCase(),
+          status: paymentData.status,
+        });
+        console.log(`📨 API: Discord notification sent for payment status update to ${paymentData.status}`);
+      } catch (webhookError) {
+        console.error('⚠️ API: Failed to send Discord notification:', webhookError);
+      }
+      
+      return NextResponse.json(result);
+    }
+    
+    // If not just a status update, handle as a full update
     console.log(`✅ Updating payment with ID: ${paymentId}`);
     const result = await updatePayment(paymentId, paymentData);
     

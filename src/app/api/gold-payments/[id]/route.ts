@@ -41,11 +41,9 @@ export async function PUT(
     const goldPayments = await getCachedGoldPayments();
     const existingPayment = goldPayments.find(p => p.id === paymentId);
     
-    // Include the user who made the update
-    paymentData.paidBy = session.user.username || session.user.name;
-    
-    console.log(`✅ Updating gold payment with ID: ${paymentId}`);
-    const result = await updateGoldPaymentStatus(paymentId, paymentData);
+    // Only update the status field
+    console.log(`✅ Updating gold payment status with ID: ${paymentId} to ${paymentData.status}`);
+    const result = await updateGoldPaymentStatus(paymentId, { status: paymentData.status });
     
     // Invalidate the gold payments cache after update
     invalidateGoldPaymentsCache();
@@ -55,11 +53,11 @@ export async function PUT(
       try {
         await sendToDiscordWebhook({
           ...existingPayment,
-          ...paymentData,
           id: paymentId,
           timestamp: new Date(),
           admin: session.user.username || session.user.name,
           action: paymentData.status.toLowerCase(),
+          status: paymentData.status,
           realm: existingPayment?.nameRealm || 'Unknown',
           paymentDuration: 'Gold Payment',
         });
