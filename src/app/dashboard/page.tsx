@@ -584,6 +584,7 @@ export default function Dashboard() {
   };
 
   const toggleExpand = (payment: Payment) => {
+    console.log('Toggling expansion for payment:', payment.id || payment._id);
     setExpandedPayment(expandedPayment === payment ? null : payment);
   };
   
@@ -919,7 +920,7 @@ export default function Dashboard() {
         <Sidebar />
       </Suspense>
       
-      <main className="flex-1 p-2 md:p-4 lg:p-6 overflow-auto ml-0 md:ml-64 mt-16 md:mt-0 main-content w-full">
+      <main className="flex-1 p-2 md:p-4 lg:p-6 overflow-auto ml-0 md:ml-32 mt-16 md:mt-0 main-content w-full">
         {error && (
           <div className="bg-white shadow rounded-lg p-4 md:p-6 mb-6">
             <div className="text-red-500">{error}</div>
@@ -1089,8 +1090,8 @@ export default function Dashboard() {
                           Price
                         </th>
                         <th scope="col" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500 text-left">
-                          Final Amount
-                        </th>
+                        Final Amount
+                        (Rial)                        </th>
                         <th scope="col" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500 text-left">
                           Game
                         </th>
@@ -1127,8 +1128,12 @@ export default function Dashboard() {
                           return (
                             <React.Fragment key={getPaymentId(payment)}>
                               <tr 
-                                className={isPaid ? 'bg-green-50' : isCancelled ? 'bg-red-50' : ''}
+                                className={`${isPaid ? 'bg-green-50' : isCancelled ? 'bg-red-50' : ''} cursor-pointer hover:bg-gray-50`}
                                 tabIndex={0}
+                                onClick={() => {
+                                  console.log('Row clicked for payment:', getPaymentId(payment));
+                                  toggleExpand(payment);
+                                }}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
                                     toggleExpand(payment);
@@ -1207,13 +1212,19 @@ export default function Dashboard() {
                                     {isPaid ? (
                                       <>
                                         <button
-                                          onClick={() => handleTogglePaid(getPaymentId(payment), 'Pending')}
-                                          className="text-white bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Prevent row expansion
+                                            handleTogglePaid(getPaymentId(payment), 'Pending');
+                                          }}
+                                          className="text-white bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                         >
-                                          Mark Pending
+                                          Mark Paid
                                         </button>
                                         <button
-                                          onClick={() => handleTogglePaid(getPaymentId(payment), 'Cancelled')}
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Prevent row expansion
+                                            handleTogglePaid(getPaymentId(payment), 'Cancelled');
+                                          }}
                                           className="text-white bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
                                         >
                                           Cancel
@@ -1222,13 +1233,19 @@ export default function Dashboard() {
                                     ) : isCancelled ? (
                                       <>
                                         <button
-                                          onClick={() => handleTogglePaid(getPaymentId(payment), 'Paid')}
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Prevent row expansion
+                                            handleTogglePaid(getPaymentId(payment), 'Paid');
+                                          }}
                                           className="text-white bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                         >
                                           Mark Paid
                                         </button>
                                         <button
-                                          onClick={() => handleTogglePaid(getPaymentId(payment), 'Pending')}
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Prevent row expansion
+                                            handleTogglePaid(getPaymentId(payment), 'Pending');
+                                          }}
                                           className="text-white bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
                                         >
                                           Mark Pending
@@ -1237,25 +1254,25 @@ export default function Dashboard() {
                                     ) : (
                                       <>
                                         <button
-                                          onClick={() => handleTogglePaid(getPaymentId(payment), 'Paid')}
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Prevent row expansion
+                                            handleTogglePaid(getPaymentId(payment), 'Paid');
+                                          }}
                                           className="text-white bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                         >
                                           Mark Paid
                                         </button>
                                         <button
-                                          onClick={() => handleTogglePaid(getPaymentId(payment), 'Cancelled')}
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Prevent row expansion
+                                            handleTogglePaid(getPaymentId(payment), 'Cancelled');
+                                          }}
                                           className="text-white bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
                                         >
                                           Cancel
                                         </button>
                                       </>
                                     )}
-                                    <button
-                                      onClick={() => toggleExpand(payment)}
-                                      className="text-indigo-600 hover:text-indigo-900 text-xs bg-gray-100 px-2 py-1 rounded"
-                                    >
-                                      {expandedPayment === payment ? 'Hide' : 'View'}
-                                    </button>
                                   </div>
                                 </td>
                               </tr>

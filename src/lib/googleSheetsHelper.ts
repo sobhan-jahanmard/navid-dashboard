@@ -153,46 +153,7 @@ export async function addOrUpdateSellerInfo(sellerInfo: {
 }
 
 // Authenticate user against Google Sheets
-export async function authenticateUser(username: string, password: string) {
-  try {
-    const sheets = await getSheetsClient();
 
-    // Fetch users from the Users sheet
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: "Users!A:B", // A = Username, B = Password
-    });
-
-    const rows = response.data.values || [];
-
-    // Skip header row if exists
-    const startRow = rows.length > 0 && rows[0][0] === "Username" ? 1 : 0;
-
-    // Find user by username
-    for (let i = startRow; i < rows.length; i++) {
-      const [rowUsername, rowPassword] = rows[i];
-
-      if (rowUsername === username) {
-        // Simple password comparison (passwords are stored in plain text in the sheet)
-        if (rowPassword === password) {
-          // Return user data (username only in this case)
-          return {
-            id: String(i), // Use row index as ID
-            name: username,
-            username,
-            role: username.toLowerCase() === "admin" ? "ADMIN" : "USER",
-          };
-        }
-        break; // Username found but password didn't match
-      }
-    }
-
-    return null; // User not found or password didn't match
-  } catch (error) {
-    console.error("Error authenticating user with Google Sheets:", error);
-    return null;
-  }
-}
 
 // Add a payment to Google Sheets
 export async function addPayment(payment: {
@@ -278,7 +239,7 @@ export async function getPayments() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: "Payment!A:Q", // Updated range to include all 16 columns
+      range: "Payment!A3:Q", // Updated range to include all 16 columns
     });
 
     const rows = response.data.values;

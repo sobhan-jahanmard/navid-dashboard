@@ -23,19 +23,15 @@ export default function DashboardNavigation() {
       href: "/dashboard",
       current: pathname === "/dashboard",
     },
-    {
-      name: "Add Payment",
-      href: "/dashboard/add",
-      current: pathname === "/dashboard/add",
-    },
+
   ];
 
   // Admin-only navigation items
   const adminNavigation = [
     {
-      name: "Admin Panel",
-      href: "/dashboard/admin",
-      current: pathname === "/dashboard/admin",
+      name: "Add Payment",
+      href: "/dashboard/add",
+      current: pathname === "/dashboard/add",
     },
   ];
 

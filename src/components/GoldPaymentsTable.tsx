@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import Button from '@/components/ui/Button';
 import { useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation';
 
 interface GoldPayment {
   id: string;
@@ -33,11 +34,13 @@ export default function GoldPaymentsTable({
 }: GoldPaymentsTableProps) {
   const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
   const { data: session } = useSession();
+  const router = useRouter();
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Toggle expanded view
   const toggleExpand = (id: string) => {
+    console.log('Toggling expansion for payment:', id);
     setExpandedPayment(expandedPayment === id ? null : id);
   };
 
@@ -164,10 +167,24 @@ export default function GoldPaymentsTable({
             ) : (
               goldPayments.map((payment) => (
                 <React.Fragment key={payment.id}>
-                  <tr className={
-                    payment.status === 'Paid' ? 'bg-green-50' : 
-                    payment.status === 'Cancelled' ? 'bg-red-50' : ''
-                  }>
+                  <tr className={`
+                    ${payment.status === 'Paid' ? 'bg-green-50' : 
+                    payment.status === 'Cancelled' ? 'bg-red-50' : ''} 
+                    cursor-pointer hover:bg-gray-50
+                  `}
+                  onClick={() => {
+                    console.log('Row clicked for payment:', payment.id);
+                    toggleExpand(payment.id);
+                  }}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      toggleExpand(payment.id);
+                      e.preventDefault();
+                    }
+                  }}
+                  aria-expanded={expandedPayment === payment.id}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{formatDate(payment.date)}</div>
                     </td>
@@ -213,14 +230,20 @@ export default function GoldPaymentsTable({
                             {payment.status === 'Paid' ? (
                               <>
                                 <button
-                                  onClick={() => handleUpdateStatus(payment.id, 'Pending')}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent row expansion
+                                    handleUpdateStatus(payment.id, 'Pending');
+                                  }}
                                   disabled={updatingStatus === payment.id}
                                   className="text-white bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
                                 >
                                   Mark Pending
                                 </button>
                                 <button
-                                  onClick={() => handleUpdateStatus(payment.id, 'Cancelled')}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent row expansion
+                                    handleUpdateStatus(payment.id, 'Cancelled');
+                                  }}
                                   disabled={updatingStatus === payment.id}
                                   className="text-white bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
                                 >
@@ -230,14 +253,20 @@ export default function GoldPaymentsTable({
                             ) : payment.status === 'Cancelled' ? (
                               <>
                                 <button
-                                  onClick={() => handleUpdateStatus(payment.id, 'Paid')}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent row expansion
+                                    handleUpdateStatus(payment.id, 'Paid');
+                                  }}
                                   disabled={updatingStatus === payment.id}
                                   className="text-white bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                 >
                                   Mark Paid
                                 </button>
                                 <button
-                                  onClick={() => handleUpdateStatus(payment.id, 'Pending')}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent row expansion
+                                    handleUpdateStatus(payment.id, 'Pending');
+                                  }}
                                   disabled={updatingStatus === payment.id}
                                   className="text-white bg-yellow-600 hover:bg-yellow-700 text-xs px-2 py-1 rounded"
                                 >
@@ -247,14 +276,20 @@ export default function GoldPaymentsTable({
                             ) : (
                               <>
                                 <button
-                                  onClick={() => handleUpdateStatus(payment.id, 'Paid')}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent row expansion
+                                    handleUpdateStatus(payment.id, 'Paid');
+                                  }}
                                   disabled={updatingStatus === payment.id}
                                   className="text-white bg-green-600 hover:bg-green-700 text-xs px-2 py-1 rounded"
                                 >
                                   Mark Paid
                                 </button>
                                 <button
-                                  onClick={() => handleUpdateStatus(payment.id, 'Cancelled')}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent row expansion
+                                    handleUpdateStatus(payment.id, 'Cancelled');
+                                  }}
                                   disabled={updatingStatus === payment.id}
                                   className="text-white bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded"
                                 >
@@ -264,13 +299,6 @@ export default function GoldPaymentsTable({
                             )}
                           </>
                         )}
-                        <button
-                          onClick={() => toggleExpand(payment.id)}
-                          disabled={updatingStatus === payment.id}
-                          className="text-indigo-600 hover:text-indigo-900 text-xs bg-gray-100 px-2 py-1 rounded"
-                        >
-                          {expandedPayment === payment.id ? 'Hide' : 'View'}
-                        </button>
                       </div>
                     </td>
                   </tr>
